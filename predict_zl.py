@@ -21,6 +21,11 @@ import scanpy as sc
 import anndata as ad
 from utils import *
 import pickle as pkl
+import datetime
+
+def log(strr):
+    temp_time = datetime.datetime.now()
+    print(f'{temp_time} -- {strr}')
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--bin_num", type=int, default=5, help='Number of bins.')
@@ -60,27 +65,27 @@ class Identity(torch.nn.Module):
         self.fc3 = nn.Linear(in_features=h_dim, out_features=out_dim, bias=True)
 
     def forward(self, x):
-        print('=============================before forward')
+        log('=============================before forward')
         x = x[:,None,:,:]
-        print('=============================forward1')
+        log('=============================forward1')
         x = self.conv1(x)
-        print('=============================forward2')
+        log('=============================forward2')
         x = self.act(x)
-        print('=============================forward3')
+        log('=============================forward3')
         x = x.view(x.shape[0],-1)
-        print('=============================forward4')
+        log('=============================forward4')
         x = self.fc1(x)
-        print('=============================forward5')
+        log('=============================forward5')
         x = self.act1(x)
-        print('=============================forward6')
+        log('=============================forward6')
         x = self.dropout1(x)
-        print('=============================forward7')
+        log('=============================forward7')
         x = self.fc2(x)
-        print('=============================forward8')
+        log('=============================forward8')
         x = self.act2(x)
-        print('=============================forward9')
+        log('=============================forward9')
         x = self.dropout2(x)
-        print('=============================forward10')
+        log('=============================forward10')
         x = self.fc3(x)
         return x
 
@@ -118,22 +123,22 @@ batch_size = data.shape[0]
 model.eval()
 pred_finals = []
 novel_indices = []
-print('=============================RAEDY')
+log('=============================RAEDY')
 with torch.no_grad():
     for index in range(batch_size):
-        print('=============================range {}'.format(index))
+        log('=============================range {}'.format(index))
         full_seq = data[index]
-        print('============full_seq = data[index] {}'.format(full_seq.shape))
+        log('============full_seq = data[index] {}'.format(full_seq.shape))
         # 扩充特征量到16906 与zheng68k一样
-        full_seq = np.pad(full_seq, (0, 13312), 'constant', constant_values=(0, 0))
-        print('============expand {}'.format(full_seq.shape))
+        # full_seq = np.pad(full_seq, (0, 13312), 'constant', constant_values=(0, 0))
+        log('============expand {}'.format(full_seq.shape))
         full_seq[full_seq > (CLASS - 2)] = CLASS - 2
         full_seq = torch.from_numpy(full_seq).long()
         full_seq = torch.cat((full_seq, torch.tensor([0]))).to(device)
         full_seq = full_seq.unsqueeze(0)
-        print('=============================before model')
+        log('=============================before model')
         pred_logits = model(full_seq)
-        print('=============================defore softmax')
+        log('=============================defore softmax')
         softmax = nn.Softmax(dim=-1)
         pred_prob = softmax(pred_logits)
         pred_final = pred_prob.argmax(dim=-1).item()
@@ -143,4 +148,4 @@ with torch.no_grad():
 pred_list = label_dict[pred_finals].tolist()
 for index in novel_indices:
     pred_list[index] = 'Unassigned'
-print(pred_list)
+log(pred_list)

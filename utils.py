@@ -15,14 +15,12 @@ import random
 import math
 import numpy as np
 import torch
-import logging
-import datetime
 from torch.optim.lr_scheduler import _LRScheduler
 from torch import nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _WeightedLoss
-from datetime import datetime
 import logging
+import datetime
 
 
 
@@ -75,7 +73,7 @@ def save_ckpt(epoch, model, optimizer, scheduler, epoch_loss, model_name, ckpt_f
     """
     if not os.path.exists(ckpt_folder):
         os.makedirs(ckpt_folder)
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     ckpt_filename = f"{timestamp}_GPU_{world_size}_{model_name}_{epoch}.pth"
     ckpt_filepath = os.path.join(ckpt_folder, ckpt_filename)
     torch.save(
