@@ -129,8 +129,8 @@ def save_best_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_
     save checkpoint
     """
     folder_path = f'{ckpt_folder}{get_job_mark()}'
-    if not os.path.exists(ckpt_folder):
-        os.makedirs(ckpt_folder)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     torch.save(
         {
             'epoch': epoch,
