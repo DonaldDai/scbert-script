@@ -22,9 +22,13 @@ from torch.nn.modules.loss import _WeightedLoss
 import logging
 import datetime
 
+def get_sc_path():
+    return '/work/09735/yichao/ls6/dev/scBERT'
 
-
-
+def get_job_mark():
+    job_id = os.environ.get("SLURM_JOB_ID", "default_job_id")
+    job_name = os.environ.get("SLURM_JOB_NAME", "default_job_name")
+    return f'{job_id}-{job_name}'
 
 def seed_all(seed_value, cuda_deterministic=False):
     """
