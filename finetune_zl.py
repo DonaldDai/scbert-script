@@ -274,6 +274,7 @@ for i in range(1, EPOCHS+1):
             if cur_acc > max_acc:
                 max_acc = cur_acc
                 trigger_times = 0
+                log(f'save finetune ckpts {rank}')
                 save_best_ckpt(i, model, optimizer, scheduler, val_loss, model_name, ckpt_dir)
             else:
                 trigger_times += 1
