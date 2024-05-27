@@ -128,6 +128,7 @@ def save_best_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_
     """
     save checkpoint
     """
+    folder_path = f'{ckpt_folder}{get_job_mark()}'
     if not os.path.exists(ckpt_folder):
         os.makedirs(ckpt_folder)
     torch.save(
@@ -138,7 +139,7 @@ def save_best_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_
             'scheduler_state_dict': scheduler.state_dict(),
             'losses': losses,
         },
-        f'{ckpt_folder}{model_name}_{epoch}_best.pth'
+        f'{folder_path}/{model_name}_{epoch}_best.pth'
     )
 
 def get_reduced(tensor, current_device, dest_device, world_size):
