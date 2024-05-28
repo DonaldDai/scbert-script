@@ -29,6 +29,7 @@ from utils import *
 import pickle as pkl
 import sys
 import datetime
+import wandb
 
 def log(strr):
     temp_time = datetime.datetime.now()
@@ -51,14 +52,14 @@ parser.add_argument("--model_path", type=str, default='./panglao_pretrained.pth'
 parser.add_argument("--ckpt_dir", type=str, default='./ckpts/finetune/', help='Directory of checkpoint to save.')
 parser.add_argument("--model_name", type=str, default='finetune', help='Finetuned model name.')
 
-logger = logging.getLogger()
 args = parser.parse_args()
 # rank = int(os.environ["RANK"])
 # local_rank = args.local_rank
 local_rank = args.local_rank if args.local_rank is not None else int(os.environ.get('LOCAL_RANK', 0))
 rank = int(os.environ.get("RANK", 0))
 is_master = local_rank == 0
-logger.info("Starting script with local_rank: {}, rank: {}, is_master: {}".format(local_rank, rank, is_master))
+is_global_master = rank == 0
+
 
 SEED = args.seed
 EPOCHS = args.epoch
@@ -200,9 +201,25 @@ loss_fn = nn.CrossEntropyLoss(weight=None).to(local_rank)
 dist.barrier()
 trigger_times = 0
 max_acc = 0.0
+if is_global_master:
+    wandb.login(key="fa1a9ae37df78a027fdc9c43a3892529b38fc4ce")
+    # 准备上传参数
+    wandb.init(
+        project="scbert-finetune",
+
+        # track hyperparameters and run metadata
+        config={
+            "learning_rate": LEARNING_RATE,
+            "architecture": "BERT",
+            "dataset": args.data_path,
+            "epochs": EPOCHS,
+        }
+    )
+
 for i in range(1, EPOCHS+1):
     train_loader.sampler.set_epoch(i)
     model.train()
+    # TODO: 似乎没有将参数同步到所有机器
     dist.barrier()
     running_loss = 0.0
     cum_acc = 0.0
@@ -233,7 +250,9 @@ for i in range(1, EPOCHS+1):
     epoch_loss = get_reduced(epoch_loss, local_rank, 0, world_size)
     epoch_acc = get_reduced(epoch_acc, local_rank, 0, world_size)
     if is_master:
-        log(f'    ==  Epoch: {i} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
+        log(f'    ==  Epoch: {i} Local Rank: {local_rank} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
+    if is_global_master:
+        wandb.log({"accuracy": epoch_acc, "loss": epoch_loss})
     dist.barrier()
     scheduler.step()
 
@@ -267,11 +286,11 @@ for i in range(1, EPOCHS+1):
             f1 = f1_score(truths, predictions, average='macro')
             val_loss = running_loss / index
             val_loss = get_reduced(val_loss, local_rank, 0, world_size)
-            if is_master:
+            if is_global_master:
                 log(f'    ==  Epoch: {i} | Validation Loss: {val_loss:.6f} | F1 Score: {f1:.6f}  ==')
                 log(confusion_matrix(truths, predictions))
                 log(classification_report(truths, predictions, target_names=label_dict.tolist(), digits=4))
-            if cur_acc > max_acc:
+            if is_global_master and cur_acc > max_acc:
                 max_acc = cur_acc
                 trigger_times = 0
                 log(f'save finetune ckpts {rank}')
