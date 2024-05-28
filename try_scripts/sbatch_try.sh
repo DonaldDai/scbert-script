@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=scbert_dist
-#SBATCH --nodes=1 
-#SBATCH -p gpu-a100-dev 
-#SBATCH -t 02:00:00 
-#SBATCH --mail-user=yichao1liu@gmail.com
+#SBATCH --job-name=sbatch_try
+#SBATCH --nodes=4
+#SBATCH -p gpu-a100
+#SBATCH -t 48:00:00
+#SBATCH --mail-user=daizhilian@hotmail.com
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=fail
 #SBATCH --mail-type=end
@@ -24,6 +24,6 @@ cd /work/09735/yichao/ls6/dev/scBERT
 MASTER_ADDR=$(hostname)
 
 # 执行PyTorch分布式训练命令
-srun bash -c "torchrun --nproc_per_node=3 --nnodes=1 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 pretrain_2024-05-13_distributed_wandb.py --data_path='./data/panglao_human.h5ad'"
+srun bash -c "torchrun --nproc_per_node=3 --nnodes=4 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 ./try_scripts/global_rank.py --data_path='./data/panglao_human.h5ad'"
 
 
