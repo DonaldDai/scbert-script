@@ -206,7 +206,12 @@ if is_global_master:
     # 准备上传参数
     wandb.init(
         project="scbert-finetune",
-
+        name=get_job_mark(),
+        save_code=True,
+        job_type="finetune",
+        tags=["finetune", "train"],
+        notes=f"finetune-{datetime.datetime.now()}",
+        id=get_job_mark(),
         # track hyperparameters and run metadata
         config={
             "learning_rate": LEARNING_RATE,
